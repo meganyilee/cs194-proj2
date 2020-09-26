@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Project #2: CS194-26</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Kumbh+Sans&family=Open+Sans&display=swap" rel="stylesheet">
+<style>
+
+h1{
+    color:#9370DB;
+    text-align: center;
+    font-family: 'Open Sans', sans-serif;}
+h2{
+    color: #4B0082;
+    padding-left: 50px;
+    padding-right:50px;
+    font-family: 'Open Sans', sans-serif;}
+p{
+    padding-left: 50px;
+    padding-right:50px;
+    font-family: 'Open Sans', sans-serif;}
+figure{
+    display:inline-block;
+    font-family: 'Open Sans', sans-serif;}
+
+</style>
+<link rel="shortcut icon" type="image/x-icon" href="favicon.png"/>
+
+</head>
+
+<body>
+
+<h1>CS 194-26: Fall 2020 <br>
+Project 2:
+Fun with Filters & Frequencies!<br>
+Megan Lee</h1>
+
+
+<h2>Part 1: Fun with Filters</h2>
+<p>In this part, we will build intuitions about 2D convolutions and filtering. </p>
+
+<h2>1.1: Finite Difference Operator</h2>
+<p><img src="derivatives.png" width="350px"> <br>
+An image gradient is a directional change in the intensity or color in an image. Thus, in order to 
+detect the edges of our image, we can utilize the gradient of our image. 
+
+A useful tool to analyze the edges of our image is by using the derivatives of the image and the 
+gradient magnitude. We began this project by using the finite difference operators above and convolving 
+them with an image to obtain the partial derivative in x and y of our image. <br>
+<img src="gradient mag.png" width="250px"> <br>
+In order to obtain the gradient magnitude image, we applied the formula above (sqrt(dx^2 + dy^2) to the partial 
+derivatives we previously found to view the overall image gradient. 
+
+</p>
+
+
+
+        <figure>
+                <img src="cameraman.png" width="350px"> 
+                <figcaption>Original Image</figcaption>
+        </figure>
+        <figure>
+                <img src="out_cameraman_grad_x.jpg" width="350px">
+                <figcaption>Partial Derivative in x</figcaption>
+        </figure>
+        <figure>
+                <img src="out_cameraman_grad_y.jpg" width="350px">
+                <figcaption>Partial Derivative in y</figcaption>
+        </figure>
+        <figure>
+                <img src="out_cameraman_gradient_magnitude.jpg" width="350px">
+                <figcaption>Gradient Magnitude</figcaption>
+        </figure>
+
+        <figure>
+                <img src="out_cameraman_binarized.jpg" width="350px">
+                <figcaption>Binarized Gradient Magnitude</figcaption>
+        </figure>
+
+        <p> I binarized the gradient magnitude image by picking the appropriate threshold, 
+        attempting to suppresss the noise while still showing the edges. After playing around
+         with it, I ended up choosing a threshold of 45, which displayed clear edges but a 
+         little noise at the bottom still.</p>
+
+
+
+<h2>1.2: Derivative of Gaussian (DoG) Filter</h2>
+<p>
+        With just the difference operator, the results were pretty noisy. In order to combat this, 
+        we use our smoothing operator: the Gaussian filter. I blurred the original image by 
+        convolving the image with a Gaussian filter of sigma 2, and then repeated the process 
+        in part 1.1 to find it's edges. <br><br>
+        
+        Intuitively, this should address the noisiness returned with just the difference operator
+         since the gaussian blur acts as a low pass filter, removing the high frequency fluctuations
+          in the image and getting rid of the grainy noise. <br><br>
+        
+        I used a threshold of 13 to binarize the gradient magnitude image. My guess was correct: 
+        this time, the edges are much 
+        thicker and cleaner and there is a lot less noise. This makes sense as removing the high frequencies 
+        in the image would remove the noise (e.g. the grass) in the photo, creating much more defined edges. However, this 
+        came at the cost of having much thicker edges. Since the image has been blurred, the actual edges 
+        that we want to detect are no longer as sharp, causing the edge to get thicker. 
+
+</p>
+
+<figure>
+        <img src="out_cameraman_gaussian.jpg" width="350px"> 
+        <figcaption>Blurred cameraman with Gaussian filter</figcaption>
+</figure>
+<figure>
+        <img src="out_cameraman_gaussian_edges.jpg" width="350px">
+        <figcaption>Binarized Gradient Magnitude</figcaption>
+</figure>
+
+<h2>1.3: Image Straightening</h2>
+<p> It is known that statistically there is a preference for vertical and horizontal edges 
+        in most images (due to gravity!). Using this insight, I was able to automate image 
+        straightening. I set my function to rotate each image between -10 degrees and 10 degrees, 
+        computed the gradient angle of the edges in the image, and created a heuristic that picked 
+        the angle rotation with the maximum number of verticle edges (defined by 
+        90 and -90 degree gradient angles). <br><br> 
+
+        I ran into a little trouble here: my heuristic was picking up edges created by the rotation. 
+        To account for this, I center cropped the image before doing any scoring. 
+        <br><br>
+        Note that it is hard to see the changes reflected in the histogram as the degree rotations 
+        where both under 10 degrees. 
+        
+        <br><br>
+        <b>Successful Cases:</b> Left to right: Original Image, Straightened Image<br>
+        
+        <img src="facade.jpg" width="350px">
+        <img src="out_straighted_facade.jpg" width="350px"><br>
+        <img src="facadeoghist.png" width="350px">
+        <img src="facadehist.png" width="350px">
+
+        <br>Angle chosen: -2 degrees
+
+        <br> 
+        <img src="house.JPG" width="350px">
+        <img src="out_straightened_house.jpg" width="350px"><br>
+        <img src="oghousehist.png" width="350px">
+        <img src="househist.png" width="350px">
+
+        <br>Angle chosen: -7 degrees
+        <br> 
+        <img src="seattle2.JPG" width="350px">
+        <img src="out_straighted_seattle.jpg" width="350px"><br>
+
+        <br>Angle chosen: -5 degrees
+        <br> <br>
+        <b>Failure Cases:</b> Left to right: Original Image, Straightened Image
+        <br><br> In this instance, the road was very curved, and there were a lot of trees and items 
+        in the photo. In the histograms shown, we can see that there are a lot of different 
+        angles in this photo. Since there's so much going on, and not a prominent amount of horizontal and vertical 
+        edges, my algorithm was unable to find a suitable 
+        angle. <br>
+        <img src="road.JPG" width="350px">
+        <img src="out_straighted_road.jpg" width="350px"><br>
+        <img src="roadhistog.png" width="350px">
+        <img src="roadhist.png" width="350px">
+
+        <br>Angle chosen: -10 degrees
+
+</p>
+<h2>Part 2: Fun with Frequencies</h2>
+<h2>2.1: Image Sharpening</h2>
+<p> The "sharpen" an image, we learned that we can apply a low pass filter such as a Gaussian 
+        filter to retain only the low frequencies of an image, and subtract this blurred version 
+        from the original imagee to obtain the high frequencies. An image with higher frequency 
+        tends to look sharper, allowing us to create a sharpening effect.
+        <figure>
+                <img src="taj.jpg" width="350px">
+                <figcaption>Original Taj Photo</figcaption>
+        </figure>
+    <figure>
+            <img src="sharpened_taj.jpg.jpg" width="350px">
+            <figcaption>Sharpened Taj</figcaption>
+    </figure> <br>
+    <p>Process is illustrated below: <br>
+    <img src="taj.jpg" width="200px">
+    <img src="sharpened_lowpasstaj.jpg" width="200px">
+    <img src="sharpened_highpasstaj.jpg" width="200px">
+    <img src="sharpened_taj.jpg.jpg" width="200px"></p>
+    <br>
+
+
+
+    <figure>
+        <img src="didi.jpg" width="350px">
+        <figcaption>Original Didi</figcaption>
+</figure><figure>
+        <img src="sharpened_didi.jpg.jpg" width="350px">
+        <figcaption>Sharpened Didi</figcaption>
+</figure><br><figure>
+            <img src="hamster.jpg" width="350px">
+            <figcaption>Original Hamster</figcaption>
+    </figure>
+    
+    <figure>
+            <img src="sharpened_hamster.jpg.jpg" width="350px">
+            <figcaption>Sharpened Hamster</figcaption>
+    </figure><br>
+    <figure>
+        <img src="dubai_skyline.jpg" width="350px">
+        <figcaption>Dubai Skyline</figcaption>
+</figure>
+<figure>
+        <img src="sharpened_dubai_skyline.jpg.jpg" width="350px">
+        <figcaption>Sharpened Dubai Skyline</figcaption>
+</figure>
+        
+</p>
+
+<h2>2.2: Hybrid Images</h2>
+<p>
+        The goal of this part of the assignment is to create hybrid images using the approach 
+        described in the SIGGRAPH 2006 paper by Oliva, Torralba, and Schyns. Here, I combined 
+        a high frequencies of one image with low frequencies of another image to product a hybrid
+         image.<br><br>
+
+        By blending the high frequency portion of one image with the low-frequency portion of another,
+         you get a hybrid image that leads to different interpretations at different distances. 
+         Upon looking more closely, the eye detects the high frequency image, but when there is a
+          bit more of a distance the image appears more like the low frequency image.
+<figure>
+        <img src="ethy.jpg" width="350px">
+        <figcaption>Original Image of Ethy</figcaption>
+</figure>
+
+    <figure>
+            <img src="ethydog.JPG" width="350px">
+            <figcaption>Original Image of Ethy's Dog</figcaption>
+    </figure>
+<figure>
+        <img src="ethy_high_pass.jpg" width="350px">
+        <figcaption>High Pass</figcaption>
+</figure>
+<figure>
+        <img src="ethy_low_pass.jpg" width="350px">
+        <figcaption>Low Pass</figcaption>
+</figure>
+<figure>
+        <img src="hybrid_ethydog.jpg" width="350px">
+        <figcaption>Hybrid in color</figcaption>
+</figure>
+<figure>
+        <img src="hybrid_ethy_bw.jpg" width="350px">
+        <figcaption>Hybrid photo in black and white </figcaption>
+</figure><br>
+
+<p>The process is illustrated through frequency analysis. The log magnitude 
+        of the Fourier transform of the two input images, the filtered images, and the 
+        hybrid image are shown below. </p>
+<figure>
+        <img src="fftethy.jpg" width="200px">
+        <figcaption>fft ethy</figcaption>
+</figure>
+<figure>
+        <img src="fftethydog.jpg" width="110px">
+        <figcaption>fft ethy's dog</figcaption>
+</figure>
+<figure>
+        <img src="ffthighpass.jpg" width="200px">
+        <figcaption>fft high pass</figcaption>
+</figure>
+<figure>
+        <img src="fftlowpass.jpg" width="200px">
+        <figcaption>fft low pass</figcaption>
+</figure>
+<figure>
+        <img src="ffthybrid.jpg" width="200px">
+        <figcaption>fft hybrid</figcaption>
+</figure><br>
+<p>Here are some more hybrids just for fun!</p>
+
+<figure>
+        <img src="sam.JPG" width="350px">
+        <figcaption>Sam</figcaption>
+</figure>
+<figure>
+        <img src="leeminho.jpg" width="350px">
+        <figcaption>Sam's Husband</figcaption>
+</figure>
+<figure>
+        <img src="hybrid_sam_minho.jpg" width="350px">
+        <figcaption>Sam/Husband Hybrid</figcaption>
+</figure>
+<figure>
+        <img src="elly.JPG" width="350px">
+        <figcaption>Elly</figcaption>
+</figure>
+<figure>
+        <img src="pine.jpg" width="350px">
+        <figcaption>Elly's Husband</figcaption>
+</figure>
+<figure>
+        <img src="hybrid_elly_pine.jpg" width="350px">
+        <figcaption>Elly/Husband Hybrid</figcaption>
+</figure>
+<figure>
+        <img src="fishy.JPG" width="350px">
+        <figcaption>Derek</figcaption>
+</figure>
+<figure>
+        <img src="derek.JPG" width="350px">
+        <figcaption>Fish</figcaption>
+</figure>
+<figure>
+        <img src="hybrid_derekfish.jpg" width="350px">
+        <figcaption>Derek the Fish</figcaption>
+</figure>
+
+<p> 
+       The hybrid of Derek and the fish was a failure. Since their faces are so different, aside from 
+       the eyes, the images do not overlap well and it is easy to see both Derek and the fish at close 
+       distances and far distances in the hybrid photo. 
+</p>
+        
+</p>
+
+<h2>2.3: Gaussian and Laplacian Stacks</h2>
+<p>
+        Lincoln: From top to bottom: Gaussian and Laplacian stacks. <br><br>
+        
+        <img src="lincoln.jpg" width="250px"><br>
+        <img src="out_gaussian_level_lincoln1.jpg" width="200px">
+        <img src="out_gaussian_level_lincoln2.jpg" width="200px">
+        <img src="out_gaussian_level_lincoln3.jpg" width="200px">
+        <img src="out_gaussian_level_lincoln4.jpg" width="200px">
+        <img src="out_gaussian_level_lincoln5.jpg" width="200px">
+        <br>
+        <img src="out_laplacian_level_lincoln1.jpg" width="200px">
+        <img src="out_laplacian_level_lincoln2.jpg" width="200px">
+        <img src="out_laplacian_level_lincoln3.jpg" width="200px">
+        <img src="out_laplacian_level_lincoln4.jpg" width="200px">
+        <img src="out_laplacian_level_lincoln5.jpg" width="200px">
+        <br><br>
+
+        Derek the Fish: From top to bottom: Gaussian and Laplacian stacks. <br><br>
+        
+        <img src="hybrid_derekfish.jpg" width="250px"><br>
+        <img src="out_gaussian_level_derek1.jpg" width="200px">
+        <img src="out_gaussian_level_derek2.jpg" width="200px">
+        <img src="out_gaussian_level_derek3.jpg" width="200px">
+        <img src="out_gaussian_level_derek4.jpg" width="200px">
+        <img src="out_gaussian_level_derek5.jpg" width="200px">
+
+        <br>
+        <img src="out_laplacian_level1.jpg" width="200px">
+        <img src="out_laplacian_level2.jpg" width="200px">
+        <img src="out_laplacian_level3.jpg" width="200px">
+        <img src="out_laplacian_level4.jpg" width="200px">
+        <img src="out_laplacian_level5.jpg" width="200px">
+
+</p>
+
+<h2>2.4: Multiresolution Blending</h2>
+<p>
+        The goal of this part of the assignment is to blend two images seamlessly using a 
+        multi resolution blending as described in the 1983 paper by Burt and Adelson. An image 
+        spline is a smooth seam joining two image together by gently distorting them. 
+        Multiresolution blending computes a gentle seam between the two images seperately at 
+        each band of image frequencies, resulting in a much smoother seam.<br><br>
+        
+        <img src="apple.jpeg" width="250px">
+        <img src="orange.jpeg" width="250px">
+        <img src="out_spline.jpg" width="250px">
+        <br><br> 
+        Splined an apple and orange together to create an oraple! <br><br>
+        <img src="basketball.jpg" width="250px">
+        <img src="orangee.jpeg" width="250px">
+        <img src="out_spline_orange.jpg" width="250px">
+        <br><br> 
+        Splined a basketball and orange together. <br><br>
+        <img src="me.jpg" width="200px">
+        <img src="egypt.jpg" width="200px">
+        <img src="meinegypt.png" width="200px">
+        <br><br> I have always wanted to go to Egypt! <br><br> 
+
+        Illustration of the process of creating the photo of me in Egypt: <br>
+        <img src="out_combined_half1.jpg" width="200px">
+        <img src="out_combined_half2.jpg" width="200px">
+        <img src="out_combined_half3.jpg" width="200px">
+        <img src="out_combined_half4.jpg" width="200px">
+        <img src="out_combined_half5.jpg" width="200px"> <br>
+
+        <img src="out_combined_otherhalf1.jpg" width="200px">
+        <img src="out_combined_otherhalf2.jpg" width="200px">
+        <img src="out_combined_otherhalf3.jpg" width="200px">
+        <img src="out_combined_otherhalf4.jpg" width="200px">
+        <img src="out_combined_otherhalf5.jpg" width="200px"><br>
+
+        <img src="out_combined_spline_level_1.jpg" width="200px">
+        <img src="out_combined_spline_level_2.jpg" width="200px">
+        <img src="out_combined_spline_level_3.jpg" width="200px">
+        <img src="out_combined_spline_level_4.jpg" width="200px">
+        <img src="out_combined_spline_level_5.jpg" width="200px">
+
+
+        
+</p>
+
+<h2>Final Thoughts</h2>
+<p>I loved this project! I had a laugh making hybrids of my friends and different animals, and 
+        but my favorite part was splining images together. The more useful and interesting takeaway from this project 
+        was that images are made up of high frequencies and low frequencies, and upon first glance 
+        you can sort of tell if the image will be suitable for manipulation (whether it's straighten, 
+        splining, or hybriding!) and what type of manipulation just based on the amount of frequencies 
+        in the image. 
+</p>
+
+</body>
+</html>
